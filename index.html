@@ -1,0 +1,161 @@
+<html>
+  <head>
+    <title>Canvas animation</title>
+    <style>
+    .title {
+  font-family: "Helvetica", sans-serif;
+  text-align:center;
+}
+#myCanvas{
+  display:block;
+  margin:0 auto;
+  width:512px;
+  background-color:#000;
+  background-image: url('http://farm3.static.flickr.com/2633/4081217254_d2e7bf59f3.jpg');
+  background-size: 256px 256px;
+  background-repeat: repeat;
+  animation: animatedBackground 10s linear infinite;
+}
+
+</style>
+  </head>
+  <body>
+  <center><marquee bgcolor="#fff" direction="left" loop="20" width="30%" align="center"><h3 class="title">Random shape generator!</h3></marquee></center>
+    <canvas id="myCanvas" width="512" height="512" ></canvas>
+    <script>
+    var canvas = document.getElementById('myCanvas');
+var context = canvas.getContext('2d');
+
+
+
+function makeCircle(distFromLeft,distanceFromTop){
+  var cx = document.querySelector('canvas').getContext('2d');
+  cx.beginPath();
+  cx.arc(distFromLeft,distanceFromTop+13,13,0,2*Math.PI);
+  cx.strokeStyle="#fff";
+  cx.strokeStyle = 'red';
+  cx.lineWidth="1";
+  return cx
+}
+
+function makeSquare(distFromLeft,distanceFromTop){
+  var cx = document.querySelector('canvas').getContext('2d');
+  cx.rect(distFromLeft,distanceFromTop,40,40);
+  cx.strokeStyle="#fff";
+  cx.strokeStyle = 'yellow';
+  cx.lineWidth="1";
+  return cx;
+}
+
+
+
+
+function spiral(centerX, centerY) {// inspired from http://codepen.io/falldowngoboone/pen/wBevjy
+  var cx = document.querySelector('canvas').getContext('2d');
+  cx.beginPath();
+  cx.strokeStyle="#fff";
+  cx.strokeStyle = 'blue';
+  cx.lineWidth="1";
+  cx.moveTo(centerX, centerY);
+  for (var i = 1; i <= 100; i++) {
+    var x = Math.cos(Math.PI / 20 * i) * (i * 0.2) + centerX,
+        y = Math.sin(Math.PI / 20 * i) * (i * 0.2) + centerY;
+    cx.lineTo(x, y);
+  }
+  return cx;
+}
+
+function zigzag(startX, startY) {// inspired from http://codepen.io/falldowngoboone/pen/wBevjy
+  var cx = document.querySelector('canvas').getContext('2d'),
+      x = startX, 
+      y = startY;
+  cx.beginPath();
+  cx.moveTo(x, y);
+  cx.strokeStyle="#fff";
+  cx.strokeStyle = 'green';
+  cx.lineWidth="1";
+  for (var i = 1; i <= 6; i++) {
+    x = i % 2 === 1 ? startX + 20 : startX;
+    y += 5;
+    cx.lineTo(x, y); 
+  }
+  return cx;
+}
+
+function smileyface(startX,startY){ 
+  var cx = document.querySelector('canvas').getContext('2d');
+  cx.beginPath();
+  cx.strokeStyle="#fff";
+  cx.lineWidth="1";
+  var x = startX;
+  var y = startY;
+  cx.arc(x+9,y+9,20,0,Math.PI*2,true); // Outer circle
+  cx.moveTo(x+24,y+9);
+  cx.arc(x+9,y+9,15,0,Math.PI,false);   // Mouth
+  cx.moveTo(x+4,y);
+  cx.arc(x+2,y+4,4,0,Math.PI*2,true);  // Left eye
+  cx.moveTo(x+19,y);
+  cx.arc(x+16,y+4,4,0,Math.PI*2,true);  // Right eye
+  return cx;
+}
+
+
+
+
+function randomizer(min,max){
+    return Math.floor(Math.random()*(max-min+1)+min);
+}
+
+
+
+var shapes = [];
+
+function createRandomShape(){
+  var odds = (FPS * 1) - 20;
+  var tomakeornot = randomizer(0,odds);
+  var addx = randomizer(-8,8);
+  var addy = randomizer(-8,8);
+  if(tomakeornot <= 3){
+    var shape = ['smiley', 'zigzag', 'spiral', 'square', 'circle'][Math.floor(Math.random() * 5)];
+    shapes.push([shape,addx,addy,256,256]);
+  }
+}
+
+function moveEachShape(){
+  var index, sf;
+   for (index = 0; index < shapes.length; ++index) {
+    shapes[index][3] = shapes[index][3] + shapes[index][1];
+    shapes[index][4] = shapes[index][4] + shapes[index][2];
+    
+      if(shapes[index][0] == 'smiley'){
+        sf = smileyface(shapes[index][3],shapes[index][4]);sf.stroke();
+      }
+      if(shapes[index][0] == 'zigzag'){
+        sf = zigzag(shapes[index][3],shapes[index][4]);sf.stroke();
+      }
+      if(shapes[index][0] == 'spiral'){
+        sf = spiral(shapes[index][3],shapes[index][4]);sf.stroke();
+      }
+      if(shapes[index][0] == 'square'){
+        sf = makeSquare(shapes[index][3],shapes[index][4]);sf.stroke();
+      }
+      if(shapes[index][0] == 'circle'){
+        sf = makeCircle(shapes[index][3],shapes[index][4]);sf.stroke();
+      }
+     // delete shapes that are off screen
+     if(shapes[index][3] > 550 || shapes[index][4] > 550 )shapes.splice(index, 1);
+   }
+  
+}
+
+var FPS = 30;
+setInterval(function() {update()}, 1000/FPS);
+
+function update() {
+  context.clearRect(0, 0, 512, 512);
+  createRandomShape();
+  moveEachShape();
+}
+</script>
+  </body>
+</html>
