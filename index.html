@@ -1,8 +1,11 @@
 <html>
   <head>
-    <title>Canvas animation</title>
+    <title>Space Chase Game - Robert Malanga</title>
     <style>
-    .title {
+body {
+    background-image: url("http://wallpapercave.com/wp/pEeUsp1.jpg");
+}
+.title {
   font-family: "Helvetica", sans-serif;
   text-align:center;
 }
@@ -13,40 +16,130 @@
   background-color:#000;
   background-image: url('http://farm3.static.flickr.com/2633/4081217254_d2e7bf59f3.jpg');
   background-size: 256px 256px;
+  box-shadow: 0px 0px 30px #fff;
   background-repeat: repeat;
   animation: animatedBackground 10s linear infinite;
 }
+#head{
+  display:block;
+  margin:0 auto;
+  width:512px;
+  background-color:;
+  font-family: "Helvetica", sans-serif;
+  text-align:center;
+  color:#fff;
+}
+#instructions{
+  display:block;
+  margin:0 auto;
+  width:512px;
+  height:400px;
+  background-color:#fff;
+  font-family:Letter Gothic Std;
+  font-size:30px;
+  text-align:left;
+  color:#000000;
+  opacity:0.4;
+  filter: alpha(opacity=40);
+}
 
+@keyframes animatedBackground {
+	from { background-position: 0 0; }
+	to { background-position: 0 100%; }
+}
 </style>
   </head>
-  <body>
-  <center><marquee bgcolor="#fff" direction="left" loop="20" width="30%" align="center"><h3 class="title">Random shape generator!</h3></marquee></center>
-    <canvas id="myCanvas" width="512" height="512" ></canvas>
-    <script>
-    var canvas = document.getElementById('myCanvas');
-var context = canvas.getContext('2d');
+<body>
+<div id="head"><img src="head.jpg"></div>
+<br>
 
+<canvas id="myCanvas" width="512" height="512" ></canvas>
 
+<script>
+myAudio = new Audio('daftpunk.mp3'); 
+myAudio.addEventListener('ended', function() {
+    this.currentTime = 0;
+    this.play();
+}, false);
+myAudio.play();
 
-function makeCircle(distFromLeft,distanceFromTop){
-  var cx = document.querySelector('canvas').getContext('2d');
-  cx.beginPath();
-  cx.arc(distFromLeft,distanceFromTop+13,13,0,2*Math.PI);
-  cx.strokeStyle="#fff";
-  cx.strokeStyle = 'red';
-  cx.lineWidth="1";
-  return cx
+var canvas = document.getElementById('myCanvas');//background color set inline style in html
+var context = canvas.getContext('2d');var context2 = canvas.getContext('2d');
+var t = 'transparent', r = '#f66', w = '#fff', b = '#000',//colors for pixel heart
+t0 = t, b1 = '#65a3cc', b2 = '#c1f1fb', b3 = '#0ce5fd',// ufo blues
+g1 = '#ccc', g2 = '#c1c1c1', g3 = '#adadad', g4 = '#848484', g5 = '#7a7a7a', g6 = '#525252', // ufo greys
+lifecount = 7, score = 0, ufospeed = 5, powerupamnt = 0,// adjust starting game elements
+playerSTARTx = 256, playerSTARTy = 256,// half the width of the canvas to center the UFO
+playerSTOPx = 256, playerSTOPy = 256,// placeholder for storing the last mouse click
+enemySeed = 1, enemySpeedBase = 5, enemySpeedVariation = 3,//enemy stuff here
+imgData = [ // remaining life heart 8 bit pixel data
+  t, t, t, t, t, t, t, t, t, t, t, t, t, 
+  t, t, b, b, b, t, t, t, b, b, b, t, t, 
+  t, b, r, r, r, b, t, b, r, r, r, b, t,
+  b, r, w, w, r, r, b, r, r, r, r, r, b,
+  b, r, w, r, r, r, r, r, r, r, r, r, b,
+  b, r, r, r, r, r, r, r, r, r, r, r, b,
+  t, b, r, r, r, r, r, r, r, r, r, b, t,
+  t, t, b, r, r, r, r, r, r, r, b, t, t,
+  t, t, t, b, r, r, r, r, r, b, t, t, t,
+  t, t, t, t, b, r, r, r, b, t, t, t, t,
+  t, t, t, t, t, b, r, b, t, t, t, t, t,
+  t, t, t, t, t, t, b, t, t, t, t, t, t,
+  t, t, t, t, t, t, t, t, t, t, t, t, t,
+],
+   
+ufoData = [ // player is the UFO - here is the 8 bit pixel data
+  // inspired by http://ink361.com/app/users/ig-1425848371/pixelchat/photos/ig-1015311774287966832_1425848371
+  t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0,
+  t0, t0, t0, t0, t0, t0, t0, t0, b1, b1, b1, t0, t0, t0, t0, t0, t0, t0, t0,
+  t0, t0, t0, t0, t0, t0, b1, b1, b1, b1, b2, b2, b1, t0, t0, t0, t0, t0, t0,
+  t0, t0, t0, t0, t0, b1, b1, b1, b1, b1, b1, b2, b2, b1, t0, t0, t0, t0, t0,
+  t0, t0, t0, t0, b1, b1, b1, b1, b1, b1, b1, b1, b2, b1, b1, t0, t0, t0, t0,
+  t0, t0, t0, t0, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, b1, t0, t0, t0, t0,
+  t0, t0, g1, g1, g1, g1, g1, g1, g1, g1, g1, g1, g1, g1, g1, g1, g1, t0, t0,
+  t0, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, t0,
+  t0, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, g2, t0,
+  g3, b3, g3, b3, g3, g3, b3, g3, g3, b3, g3, g3, b3, g3, g3, b3, g3, b3, g3,
+  t0, g6, g5, g4, g4, g4, g4, g4, g4, g4, g4, g4, g4, g4, g4, g4, g5, g6, t0,
+  t0, t0, g6, g5, g4, g4, g4, g4, g4, g4, g4, g4, g4, g4, g4, g5, g6, t0, t0,
+  t0, t0, t0, t0, g5, g5, g5, g5, g5, g5, g5, g5, g5, g5, g5, t0, t0, t0, t0,
+  t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0,
+  t0, t0, t0, t0, t0, b3, b3, b3, b3, b3, b3, b3, b3, b3, t0, t0, t0, t0, t0,
+  t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0,
+  t0, t0, t0, t0, t0, t0, t0, b3, b3, b3, b3, b3, t0, t0, t0, t0, t0, t0, t0,
+  t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0,
+  t0, t0, t0, t0, t0, t0, t0, t0, t0, b3, t0, t0, t0, t0, t0, t0, t0, t0, t0,  
+  t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0, t0,
+]
+
+//show life count
+function makeHeart(distFromLeft,distanceFromTop,pixelSize){// inspired by http://codepen.io/rafaelcastrocouto/pen/GiJra
+  var m = distFromLeft, x = m , y = distanceFromTop, w = 13, s = pixelSize;
+  for (var i = 0; i < imgData.length; i++) {
+    if(x == (w * s) + m) { x = m; y += s; }
+    context.fillStyle = imgData[i];
+    context.fillRect(x, y, s, s);
+    x += s;
+  }
 }
 
-function makeSquare(distFromLeft,distanceFromTop){
-  var cx = document.querySelector('canvas').getContext('2d');
-  cx.rect(distFromLeft,distanceFromTop,40,40);
-  cx.strokeStyle="#fff";
-  cx.strokeStyle = 'yellow';
-  cx.lineWidth="1";
-  return cx;
+function makeUFO(distFromLeft,distanceFromTop,pixelSize){// inspired by the heart method and an 8 bit image
+  var m = distFromLeft, x = m , y = distanceFromTop, w = 19, s = pixelSize;
+  for (var i = 0; i < ufoData.length; i++) {
+    if(x == (w * s) + m) { x = m; y += s; }
+    context.fillStyle = ufoData[i];
+    context.fillRect(x, y, s, s);
+    x += s;
+  }
 }
 
+function displayScore(score){// refresh score
+  context.fillStyle = "#fff";
+  context.font = "24px Helvetica";
+  context.textAlign = "left";
+  context.textBaseline = "top";
+  context.fillText("Score: " + score, 1, 1);
+}
 
 
 
@@ -54,7 +147,6 @@ function spiral(centerX, centerY) {// inspired from http://codepen.io/falldowngo
   var cx = document.querySelector('canvas').getContext('2d');
   cx.beginPath();
   cx.strokeStyle="#fff";
-  cx.strokeStyle = 'blue';
   cx.lineWidth="1";
   cx.moveTo(centerX, centerY);
   for (var i = 1; i <= 100; i++) {
@@ -72,7 +164,6 @@ function zigzag(startX, startY) {// inspired from http://codepen.io/falldowngobo
   cx.beginPath();
   cx.moveTo(x, y);
   cx.strokeStyle="#fff";
-  cx.strokeStyle = 'green';
   cx.lineWidth="1";
   for (var i = 1; i <= 6; i++) {
     x = i % 2 === 1 ? startX + 20 : startX;
@@ -82,7 +173,7 @@ function zigzag(startX, startY) {// inspired from http://codepen.io/falldowngobo
   return cx;
 }
 
-function smileyface(startX,startY){ 
+function smileyface(startX,startY){ // inspiration from https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Drawing_shapes
   var cx = document.querySelector('canvas').getContext('2d');
   cx.beginPath();
   cx.strokeStyle="#fff";
@@ -91,7 +182,7 @@ function smileyface(startX,startY){
   var y = startY;
   cx.arc(x+9,y+9,20,0,Math.PI*2,true); // Outer circle
   cx.moveTo(x+24,y+9);
-  cx.arc(x+9,y+9,15,0,Math.PI,false);   // Mouth
+  cx.arc(x+9,y+9,15,0,Math.PI,false);   // Mouth (clockwise)
   cx.moveTo(x+4,y);
   cx.arc(x+2,y+4,4,0,Math.PI*2,true);  // Left eye
   cx.moveTo(x+19,y);
@@ -102,60 +193,180 @@ function smileyface(startX,startY){
 
 
 
+
+
+
+// get mouse down coordinates -- http://miloq.blogspot.com/2011/05/coordinates-mouse-click-canvas.html
+canvas.addEventListener("mousedown", getPosition, false);
+
+function getPosition(event)
+{
+  var x = event.x;
+  var y = event.y;
+  var canvas = document.getElementById("myCanvas");
+  x -= canvas.offsetLeft;
+  y -= canvas.offsetTop;
+  playerSTOPx = x;
+  playerSTOPy = y;
+  //console.log("x:" + x + " y:" + y);
+  //console.log(ai);
+}
+
+//listen for spacebar and if powerup is ready then obliterate all the baddies
+window.addEventListener("keypress", checkKeyPressed, false);
+ 
+function checkKeyPressed(e) {
+    if (e.keyCode == "32") {
+        console.log("The 'space' key is pressed.");
+      
+      if(powerupamnt>=512)usePowerup();// if powerbar is full, destroy all baddies
+      powerupamnt = 0;
+    }
+}
+function usePowerup(){
+       
+context.rect(0,0,512,512);
+context.fillStyle="red";
+context.fill();// flash screen red as baddies are destroyed
+    var index;
+  for (index = 0; index < ai.length; ++index) {
+    //console.log(ai[index]);
+    if(ai[index][0] == 'smiley'){ 
+      //ai[index][1] = ai[index][1] + ai[index][3];
+    }  
+    if(ai[index][0] == 'zigzag'){ai[index][1]=600; // we really just move them offscreen and cleanup later       
+      //ai[index][1] = ai[index][1] + ai[index][3];
+    }
+    if(ai[index][0] == 'spiral'){ai[index][1]=600;
+      //ai[index][1] = ai[index][1] + ai[index][3];
+    }
+    
+    //if(ai[index][1] > 550)ai.splice(index, 1);// delete enemies that are off screen
+  }
+}
+
+// http://stackoverflow.com/questions/4959975/generate-random-value-between-two-numbers-in-javascript
 function randomizer(min,max){
     return Math.floor(Math.random()*(max-min+1)+min);
 }
 
 
+var enemyTypes = ["smiley","zigzag","spiral"];
+// enemy controller
+var ai = [
+  //[type , x , y , speed]
+  ["smiley" , 0 , 200 , 3]
+];
 
-var shapes = [];
+//basic game loop stuff -- http://www.html5rocks.com/en/tutorials/canvas/notearsgame/
+var FPS = 30;
+setInterval(function() {
+  update();
+  draw();
+}, 1000/FPS);
 
-function createRandomShape(){
-  var odds = (FPS * 1) - 20;
+function enemyFactory(){
+  var odds = (FPS * 1) - enemySeed;
+  var enemyspeedHIGH = enemySpeedBase + enemySpeedVariation;
+  var enemyspeedLOW  = enemySpeedBase - enemySpeedVariation;
   var tomakeornot = randomizer(0,odds);
-  var addx = randomizer(-8,8);
-  var addy = randomizer(-8,8);
-  if(tomakeornot <= 3){
-    var shape = ['smiley', 'zigzag', 'spiral', 'square', 'circle'][Math.floor(Math.random() * 5)];
-    shapes.push([shape,addx,addy,256,256]);
+  
+  if(tomakeornot == 1){
+    var startYcoord = randomizer(50,480);
+    var speedset = randomizer(enemyspeedLOW, enemyspeedHIGH);
+    // http://stackoverflow.com/questions/4550505/getting-random-value-from-an-array
+    var enemy = ['smiley', 'zigzag', 'spiral'][Math.floor(Math.random() * 3)];
+    //enemy = "smiley";
+    ai.push([enemy,0,startYcoord,speedset]);// make a new enemy here
+    //console.log(ai);
+  }
+}
+function moveEachEnemy(){
+  var index;
+  for (index = 0; index < ai.length; ++index) {
+    //console.log(ai[index]);
+    if(ai[index][0] == 'smiley'){
+      ai[index][1] = ai[index][1] + ai[index][3];
+    }
+    if(ai[index][0] == 'zigzag'){
+      ai[index][1] = ai[index][1] + ai[index][3];
+    }
+    if(ai[index][0] == 'spiral'){
+      ai[index][1] = ai[index][1] + ai[index][3];
+    }
+    
+    if(ai[index][1] > 550)ai.splice(index, 1);// delete enemies that are off screen
   }
 }
 
-function moveEachShape(){
-  var index, sf;
-   for (index = 0; index < shapes.length; ++index) {
-    shapes[index][3] = shapes[index][3] + shapes[index][1];
-    shapes[index][4] = shapes[index][4] + shapes[index][2];
-    
-      if(shapes[index][0] == 'smiley'){
-        sf = smileyface(shapes[index][3],shapes[index][4]);sf.stroke();
-      }
-      if(shapes[index][0] == 'zigzag'){
-        sf = zigzag(shapes[index][3],shapes[index][4]);sf.stroke();
-      }
-      if(shapes[index][0] == 'spiral'){
-        sf = spiral(shapes[index][3],shapes[index][4]);sf.stroke();
-      }
-      if(shapes[index][0] == 'square'){
-        sf = makeSquare(shapes[index][3],shapes[index][4]);sf.stroke();
-      }
-      if(shapes[index][0] == 'circle'){
-        sf = makeCircle(shapes[index][3],shapes[index][4]);sf.stroke();
-      }
-     // delete shapes that are off screen
-     if(shapes[index][3] > 550 || shapes[index][4] > 550 )shapes.splice(index, 1);
-   }
-  
-}
-
-var FPS = 30;
-setInterval(function() {update()}, 1000/FPS);
-
 function update() {
-  context.clearRect(0, 0, 512, 512);
-  createRandomShape();
-  moveEachShape();
+  if(lifecount > 0){
+    // MOVE THE UFO BY CLICKING WITH THE MOUSE
+    // movement is TOO basic...fine for now
+    if(playerSTARTx > playerSTOPx)playerSTARTx = playerSTARTx - ufospeed;
+    if(playerSTARTy > playerSTOPy)playerSTARTy = playerSTARTy - ufospeed;
+    if(playerSTARTx < playerSTOPx)playerSTARTx = playerSTARTx + ufospeed;
+    if(playerSTARTy < playerSTOPy)playerSTARTy = playerSTARTy + ufospeed;
+
+    enemyFactory();
+    moveEachEnemy();
+  }
 }
+function draw() {
+  
+  context.clearRect(0, 0, 512, 512);
+  //draw the power up line
+
+  context.beginPath();
+  context.lineWidth="3";
+  context.strokeStyle="#0ce5da";
+  context.rect(0,511,powerupamnt,0); 
+  context.stroke();
+
+  if(powerupamnt<512)powerupamnt++;
+  
+  
+  
+  
+  
+  
+  if(lifecount > 0){
+    
+    var index, sf;
+    var col = 30;// collision hit box size
+    for (index = 0; index < ai.length; ++index){// draw each enemy on each frame and check for collisions
+      var distx = Math.abs(playerSTARTx - ai[index][1]);var disty = Math.abs(playerSTARTy - ai[index][2]);
+      if(ai[index][0] == 'smiley'){
+        if(distx < col && disty < col){score++;ai[index][1]=600;}else{sf = smileyface(ai[index][1],ai[index][2]);sf.stroke();}
+      }
+      if(ai[index][0] == 'zigzag'){
+        if(distx < col && disty < col){lifecount--;ai[index][1]=600;}else{sf = zigzag(ai[index][1],ai[index][2]);sf.stroke();}
+      }
+      if(ai[index][0] == 'spiral'){
+        if(distx < col && disty < col){lifecount--;ai[index][1]=600;}else{sf = spiral(ai[index][1],ai[index][2]);sf.stroke();}
+      }
+    }
+    makeUFO(playerSTARTx-19,playerSTARTy-19,2);// subtract 19 to center the UFO on mouseclick point
+    displayScore(score);
+    for (var i = 0; i < lifecount; i++) {c = (512 - (lifecount * 27)) + (i * 27);makeHeart(c,0,2);}
+  }
+}
+
+// check for collisions and adjust score or hearts accordingly
 </script>
+
+<br><br>
+<div id="instructions">
+<center>HOW TO PLAY</center>
+<span style="font-size:20px;">
+&#9679; Click around game area to move UFO (your player)
+<br>&#9679; Avoid squiggles and zig-zags
+<br>&#9679; Collect as many smileys as possible (each smiley = 1 point)
+<br>&#9679; As game plays, the blue power bar at the bottom begins to fill. When it's full, tap the spacebar to remove all the enemies on the screen (don't press to early!)
+<br>&#9679; Each squiggle or zig-zag you hit takes away a heart. You start with x hearts, lose all hearts and the game is over. 
+<br>&#9679; Refresh page to start over. 
+</span>
+</div>
+
   </body>
 </html>
